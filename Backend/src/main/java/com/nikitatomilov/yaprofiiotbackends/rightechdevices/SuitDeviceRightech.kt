@@ -2,6 +2,9 @@ package com.nikitatomilov.yaprofiiotbackends.rightechdevices
 
 import com.nikitatomilov.yaprofiiotbackends.communication.UDPGateway
 import com.nikitatomilov.yaprofiiotbackends.rightechintegration.dto.Object
+import com.nikitatomilov.yaprofiiotbackends.rightechintegration.mqtt.BleDevice
+import com.nikitatomilov.yaprofiiotbackends.rightechintegration.mqtt.CoordsPackage
+import com.nikitatomilov.yaprofiiotbackends.rightechintegration.mqtt.CoordsPackage.Companion.listOfEmpty
 import com.nikitatomilov.yaprofiiotbackends.services.PingService
 import com.nikitatomilov.yaprofiiotbackends.services.SuitDevice
 import mu.KLogging
@@ -24,7 +27,12 @@ class SuitDeviceRightech(
   private lateinit var suitDevice: SuitDevice
 
   private val connected = AtomicBoolean(false)
-  @Volatile private var suitActive = false
+  @Volatile
+  private var suitActive = false
+  @Volatile
+  private var coordsPackage = COORDS_OUTSIDE
+  @Volatile
+  private var prevPosition = 1
 
   fun setup(obj: Object) {
     logger.warn { "Going to connect to $mqttUrl" }
@@ -94,6 +102,20 @@ class SuitDeviceRightech(
     }
   }
 
+  fun changePosition(positionFlag: Int) {
+    if (connected.get() && (prevPosition != positionFlag)) {
+      prevPosition = positionFlag
+      coordsPackage = when(positionFlag) {
+        1 -> COORDS_OUTSIDE
+        2 -> COORDS_INSIDE
+        3 -> COORDS_DANGER_1
+        4 -> COORDS_DANGER_2
+        else -> COORDS_OUTSIDE
+      }
+      mqttClient.publish("beacons", coordsPackage.toBase64().toByteArray(), 2, true)
+    }
+  }
+
   private fun mqttCallback(topic: String, msg: MqttMessage) {
     logger.warn { "Incoming from topic $topic: $msg" }
     if (topic == "/state/active") {
@@ -109,5 +131,19 @@ class SuitDeviceRightech(
     }
   }
 
-  companion object : KLogging()
+  companion object : KLogging() {
+    private val COORDS_OUTSIDE = CoordsPackage(67.562879f, 63.774948f, listOfEmpty())
+    private val COORDS_INSIDE = CoordsPackage(67.56419f, 63.847046f, listOf(
+        BleDevice(0x9812, -64),
+        BleDevice(0x0a35, -63),
+        BleDevice(0x2939, -62),
+        BleDevice(0xd396, -61),
+        BleDevice(0xf741, -60),
+        BleDevice(0x01dd, -59),
+        BleDevice(0x08cd, -58),
+        BleDevice(0x0e60, -57)
+    ))
+    private val COORDS_DANGER_1 = CoordsPackage(67.597448f, 63.707657f, listOfEmpty())
+    private val COORDS_DANGER_2 = CoordsPackage(67.63092f, 64.109344f, listOfEmpty())
+  }
 }

@@ -37,6 +37,12 @@ class SuitDevice(
             val oxygen = (msg.payload[0].asUint() / 255.0 * 100.0).toInt()
             val battery = (msg.payload[1].asUint() / 255.0 * 100.0).toInt()
             parent.sendData(oxygen, battery)
+            var flag = 0
+            if (msg.payload[2].toInt() == 1) flag = 1
+            if (msg.payload[3].toInt() == 1) flag = 2
+            if (msg.payload[4].toInt() == 1) flag = 3
+            if (msg.payload[5].toInt() == 1) flag = 4
+            parent.changePosition(flag)
           }
           udpGateway.clearMessage(DEVICE_ID)
         } catch (e: Exception) {
