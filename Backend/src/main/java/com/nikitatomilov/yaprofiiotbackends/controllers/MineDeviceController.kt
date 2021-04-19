@@ -1,6 +1,6 @@
 package com.nikitatomilov.yaprofiiotbackends.controllers
 
-import com.nikitatomilov.yaprofiiotbackends.devices.MineDevice
+import com.nikitatomilov.yaprofiiotbackends.services.MineDevice
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping

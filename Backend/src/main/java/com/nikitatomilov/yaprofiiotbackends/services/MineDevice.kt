@@ -1,4 +1,4 @@
-package com.nikitatomilov.yaprofiiotbackends.devices
+package com.nikitatomilov.yaprofiiotbackends.services
 
 import com.nikitatomilov.yaprofiiotbackends.communication.Message
 import com.nikitatomilov.yaprofiiotbackends.communication.Message.Companion.SET_RQ
@@ -35,6 +35,6 @@ class MineDevice(
   }
 
   companion object : KLogging() {
-    private const val DEVICE_ID = 1
+    const val DEVICE_ID = 1
   }
 }

@@ -1,6 +1,6 @@
 package com.nikitatomilov.yaprofiiotbackends.controllers
 
-import com.nikitatomilov.yaprofiiotbackends.devices.HelicopterDevice
+import com.nikitatomilov.yaprofiiotbackends.services.HelicopterDevice
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping

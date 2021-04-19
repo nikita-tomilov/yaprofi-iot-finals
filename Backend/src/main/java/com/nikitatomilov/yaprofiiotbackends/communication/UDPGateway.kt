@@ -1,6 +1,8 @@
 package com.nikitatomilov.yaprofiiotbackends.communication
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.nikitatomilov.yaprofiiotbackends.communication.Message.Companion.PING
+import com.nikitatomilov.yaprofiiotbackends.services.PingService
 import com.nikitatomilov.yaprofiiotbackends.util.Utils
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
@@ -17,7 +19,8 @@ import kotlin.system.exitProcess
 
 @Service
 class UDPGateway(
-  @Value("\${nrfGatewayAddress:192.168.0.143}") private val nrfGatewayAddress: String
+  @Value("\${nrfGatewayAddress:192.168.0.143}") private val nrfGatewayAddress: String,
+  private val pingService: PingService
 ) {
 
   private lateinit var socket: DatagramSocket
@@ -52,8 +55,11 @@ class UDPGateway(
         try {
           socket.receive(receivePacket)
           val msg = Message.fromBytes(receivePacket.data)
-          logger.info { "Received message $msg" }
-          responseMap[msg.nodeID] = msg
+          if (msg.type == PING) {
+            pingService.registerPing(msg.nodeID, msg.timestamp)
+          } else {
+            responseMap[msg.nodeID] = msg
+          }
         } catch (stex: SocketTimeoutException) {
           //do nothing on socket timeout
         } catch (ex: Exception) {

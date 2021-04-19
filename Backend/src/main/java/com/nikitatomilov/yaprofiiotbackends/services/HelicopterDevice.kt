@@ -1,8 +1,7 @@
-package com.nikitatomilov.yaprofiiotbackends.devices
+package com.nikitatomilov.yaprofiiotbackends.services
 
 import com.nikitatomilov.yaprofiiotbackends.communication.Message
 import com.nikitatomilov.yaprofiiotbackends.communication.Message.Companion.ALARM_RQ
-import com.nikitatomilov.yaprofiiotbackends.communication.Message.Companion.SET_RQ
 import com.nikitatomilov.yaprofiiotbackends.communication.UDPGateway
 import mu.KLogging
 import org.springframework.stereotype.Service
@@ -28,6 +27,6 @@ class HelicopterDevice(
   }
 
   companion object : KLogging() {
-    private const val DEVICE_ID = 2
+    const val DEVICE_ID = 2
   }
 }
