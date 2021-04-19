@@ -59,7 +59,8 @@ data class Message(
     const val SET_RP = 3
     const val PING = 4
     const val PONG = 5
-    const val ALARM = 6
+    const val ALARM_RQ = 6
+    const val ALARM_RP = 7
 
     const val DIGITAL_WRITE = 0
     const val DIGITAL_READ = 1
