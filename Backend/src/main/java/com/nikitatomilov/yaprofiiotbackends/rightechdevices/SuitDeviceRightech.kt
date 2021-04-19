@@ -1,16 +1,13 @@
 package com.nikitatomilov.yaprofiiotbackends.rightechdevices
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.nikitatomilov.yaprofiiotbackends.communication.Message
 import com.nikitatomilov.yaprofiiotbackends.communication.UDPGateway
 import com.nikitatomilov.yaprofiiotbackends.rightechintegration.dto.Object
 import com.nikitatomilov.yaprofiiotbackends.services.PingService
+import com.nikitatomilov.yaprofiiotbackends.services.SuitDevice
 import mu.KLogging
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
@@ -24,19 +21,17 @@ class SuitDeviceRightech(
 
   private lateinit var mqttClient: MqttClient
 
-  private val connected = AtomicBoolean(false)
+  private lateinit var suitDevice: SuitDevice
 
-  private val executor = Executors.newSingleThreadExecutor(
-      ThreadFactoryBuilder()
-          .setDaemon(true)
-          .setNameFormat("suit-monitor")
-          .build())
+  private val connected = AtomicBoolean(false)
+  @Volatile private var suitActive = false
 
   fun setup(obj: Object) {
     logger.warn { "Going to connect to $mqttUrl" }
     this.obj = obj
     connectMqtt()
-    setupScheduler()
+    suitDevice = SuitDevice(udpGateway, pingService, this)
+    suitDevice.setupScheduler()
   }
 
   private fun connectMqtt() {
@@ -46,31 +41,22 @@ class SuitDeviceRightech(
     options.isCleanSession = true
     options.connectionTimeout = 10
     mqttClient.connect(options)
+    mqttClient.setCallback(object : MqttCallback {
+      override fun messageArrived(p0: String, p1: MqttMessage) {
+        mqttCallback(p0, p1)
+      }
+
+      override fun connectionLost(p0: Throwable?) {
+        //for olympiad - nothing, but we should think about it for actual production usage
+      }
+
+      override fun deliveryComplete(p0: IMqttDeliveryToken?) {
+        //nothing
+      }
+    })
     connected.set(true)
     sendInitialData()
     logger.warn { "Suit went online" }
-  }
-
-  private fun setupScheduler() {
-    executor.submit {
-      while (true) {
-        try {
-          val msg = udpGateway.retrieveMessageBlocking(SUIT_NODE_ID)
-          if (msg.type == Message.GET_RP) {
-            val oxygen = (msg.payload[0].asUint() / 255.0 * 100.0).toInt()
-            val battery = (msg.payload[1].asUint() / 255.0 * 100.0).toInt()
-            sendData(oxygen, battery)
-          }
-          udpGateway.clearMessage(SUIT_NODE_ID)
-        } catch (e: Exception) {
-        }
-        if ((System.currentTimeMillis() - pingService.latestPingTs(SUIT_NODE_ID)) > 6000) {
-          disconnectMqtt()
-        } else {
-          tryReconnectMqtt()
-        }
-      }
-    }
   }
 
   fun disconnectMqtt() {
@@ -88,7 +74,7 @@ class SuitDeviceRightech(
   private fun sendInitialData() {
     if (connected.get()) {
       mqttClient.publish("/state/charge", "100".toByteArray(), 2, true)
-      mqttClient.publish("/state/active", "true".toByteArray(), 2, true)
+      mqttClient.publish("/state/is_active", "false".toByteArray(), 2, true)
       mqttClient.publish("environment/oxygen", "80".toByteArray(), 2, true)
       mqttClient.publish("environment/humidity", "100".toByteArray(), 2, true)
       mqttClient.publish("environment/carbon", "0".toByteArray(), 2, true)
@@ -100,16 +86,28 @@ class SuitDeviceRightech(
     }
   }
 
-  private fun sendData(oxygenLevel: Int, batteryCharge: Int) {
+  fun sendData(oxygenLevel: Int, batteryCharge: Int) {
     if (connected.get()) {
+      mqttClient.publish("/state/is_active", "$suitActive".toByteArray(), 2, true)
       mqttClient.publish("/state/charge", "$batteryCharge".toByteArray(), 2, true)
       mqttClient.publish("environment/oxygen", "$oxygenLevel".toByteArray(), 2, true)
     }
   }
 
-  private fun Byte.asUint() = this.toUByte().toInt()
-
-  companion object : KLogging() {
-    private const val SUIT_NODE_ID = 3
+  private fun mqttCallback(topic: String, msg: MqttMessage) {
+    logger.warn { "Incoming from topic $topic: $msg" }
+    if (topic == "/state/active") {
+      val active = (String(msg.payload) == "true")
+      //there is some weird concurrency going on, gotta be careful
+      if (active) {
+        suitDevice.activeLedOn()
+        suitActive = true
+      } else {
+        suitDevice.activeLedOff()
+        suitActive = false
+      }
+    }
   }
+
+  companion object : KLogging()
 }
