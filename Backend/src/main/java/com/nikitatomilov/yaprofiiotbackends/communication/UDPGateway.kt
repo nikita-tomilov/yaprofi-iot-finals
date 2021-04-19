@@ -76,7 +76,7 @@ class UDPGateway(
   @Throws(IOException::class)
   fun retrieveMessageBlocking(nodeID: Int): Message {
     var ans: Message? = null
-    val timeout = System.currentTimeMillis() + 5000
+    val timeout = System.currentTimeMillis() + 1000
     while (System.currentTimeMillis() < timeout) {
       ans = responseMap[nodeID]
       if (ans != null) {
