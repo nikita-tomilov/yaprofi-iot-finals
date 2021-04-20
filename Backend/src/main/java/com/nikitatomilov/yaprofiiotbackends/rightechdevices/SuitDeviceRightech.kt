@@ -112,7 +112,13 @@ class SuitDeviceRightech(
         4 -> COORDS_DANGER_2
         else -> COORDS_OUTSIDE
       }
+      val xyzPackage = if (positionFlag == 2) {
+        """{"x": 5, "y": 7, "z": -2}"""
+      } else {
+        """{"x": -1, "y": -1, "z": -1}"""
+      }
       mqttClient.publish("beacons", coordsPackage.toBase64().toByteArray(), 2, true)
+      mqttClient.publish("coords", xyzPackage.toByteArray(), 2, true)
     }
   }
 
@@ -133,7 +139,7 @@ class SuitDeviceRightech(
 
   companion object : KLogging() {
     private val COORDS_OUTSIDE = CoordsPackage(67.562879f, 63.774948f, listOfEmpty())
-    private val COORDS_INSIDE = CoordsPackage(67.56419f, 63.847046f, listOf(
+    private val COORDS_INSIDE = CoordsPackage(67.534985f, 63.790591f, listOf(
         BleDevice(0x9812, -64),
         BleDevice(0x0a35, -63),
         BleDevice(0x2939, -62),
