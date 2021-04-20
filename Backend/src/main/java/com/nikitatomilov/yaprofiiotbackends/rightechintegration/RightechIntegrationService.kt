@@ -41,17 +41,17 @@ class RightechIntegrationService(
     logger.warn { "Found ${objects.size} objects" }
 
     val objectForSuit =
-        objects.single { (it.model == modelForSuit._id) && (it.name!!.doesNotCountain("бот")) }
+        objects.single { (it.model == modelForSuit._id) && (it.name!!.doesNotCountain("управления")) }
     logger.warn { "Going to use $objectForSuit as Suit" }
     suitDeviceRightech.setup(objectForSuit)
 
     val objectForHeli =
-        objects.single { (it.model == modelForHelicopter._id) && (it.name!!.doesNotCountain("бот")) }
+        objects.single { (it.model == modelForHelicopter._id) && (it.name!!.doesNotCountain("управления")) }
     logger.warn { "Going to use $objectForHeli as Helicopter" }
     helicopterDeviceRightech.setup(objectForHeli)
 
     val objectForMine =
-        objects.single { (it.model == modelForMine._id) && (it.name!!.doesNotCountain("бот")) }
+        objects.single { (it.model == modelForMine._id) && (it.name!!.doesNotCountain("управления")) }
     logger.warn { "Going to use $objectForMine as Mineshaft" }
     mineDeviceRightech.setup(objectForMine)
   }
