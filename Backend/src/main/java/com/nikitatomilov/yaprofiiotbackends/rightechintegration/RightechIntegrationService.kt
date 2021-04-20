@@ -1,6 +1,7 @@
 package com.nikitatomilov.yaprofiiotbackends.rightechintegration
 
 import com.nikitatomilov.yaprofiiotbackends.rightechdevices.HelicopterDeviceRightech
+import com.nikitatomilov.yaprofiiotbackends.rightechdevices.MineDeviceRightech
 import com.nikitatomilov.yaprofiiotbackends.rightechdevices.SuitDeviceRightech
 import com.nikitatomilov.yaprofiiotbackends.rightechintegration.api.ModelApi
 import com.nikitatomilov.yaprofiiotbackends.rightechintegration.api.ObjectApi
@@ -15,7 +16,8 @@ class RightechIntegrationService(
   @Value("\${rightechAddress:https://sandbox.rightech.io/}") private val url: String,
   @Value("#{environment.RIGHTECH_API_TOKEN}") private val token: String,
   private val suitDeviceRightech: SuitDeviceRightech,
-  private val helicopterDeviceRightech: HelicopterDeviceRightech
+  private val helicopterDeviceRightech: HelicopterDeviceRightech,
+  private val mineDeviceRightech: MineDeviceRightech
 ) {
 
   private lateinit var objectApi: ObjectApi
@@ -47,6 +49,11 @@ class RightechIntegrationService(
         objects.single { (it.model == modelForHelicopter._id) && (it.name!!.doesNotCountain("бот")) }
     logger.warn { "Going to use $objectForHeli as Helicopter" }
     helicopterDeviceRightech.setup(objectForHeli)
+
+    val objectForMine =
+        objects.single { (it.model == modelForMine._id) && (it.name!!.doesNotCountain("бот")) }
+    logger.warn { "Going to use $objectForMine as Mineshaft" }
+    mineDeviceRightech.setup(objectForMine)
   }
 
   private fun String.doesNotCountain(s: String): Boolean {
