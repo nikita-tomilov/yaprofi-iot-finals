@@ -19,7 +19,7 @@ import kotlin.system.exitProcess
 
 @Service
 class UDPGateway(
-  @Value("\${nrfGatewayAddress:192.168.0.143}") private val nrfGatewayAddress: String,
+  @Value("#{environment.NRF_GATEWAY_ADDRESS}") private val nrfGatewayAddress: String,
   private val pingService: PingService
 ) {
 

@@ -17,7 +17,7 @@ class SuitDevice(
   private val executor = Executors.newFixedThreadPool(2,
       ThreadFactoryBuilder()
           .setDaemon(true)
-          .setNameFormat("suit-monitor")
+          .setNameFormat("suit-monitor-%d")
           .build())
 
   fun activeLedOn() {

@@ -38,3 +38,4 @@ package-lock.json
 
 obj/
 cppudp
+mqtt-iprofi_*/

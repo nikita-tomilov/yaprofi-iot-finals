@@ -1,24 +1,21 @@
 package com.nikitatomilov.yaprofiiotbackends.rightechintegration
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.nikitatomilov.yaprofiiotbackends.communication.Message.Companion.GET_RP
-import com.nikitatomilov.yaprofiiotbackends.communication.UDPGateway
+import com.nikitatomilov.yaprofiiotbackends.rightechdevices.HelicopterDeviceRightech
 import com.nikitatomilov.yaprofiiotbackends.rightechdevices.SuitDeviceRightech
 import com.nikitatomilov.yaprofiiotbackends.rightechintegration.api.ModelApi
 import com.nikitatomilov.yaprofiiotbackends.rightechintegration.api.ObjectApi
 import com.nikitatomilov.yaprofiiotbackends.rightechintegration.util.RightechFeignRepository
-import com.nikitatomilov.yaprofiiotbackends.services.PingService
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.concurrent.Executors
 import javax.annotation.PostConstruct
 
 @Service
 class RightechIntegrationService(
   @Value("\${rightechAddress:https://sandbox.rightech.io/}") private val url: String,
   @Value("#{environment.RIGHTECH_API_TOKEN}") private val token: String,
-  private val suitDeviceRightech: SuitDeviceRightech
+  private val suitDeviceRightech: SuitDeviceRightech,
+  private val helicopterDeviceRightech: HelicopterDeviceRightech
 ) {
 
   private lateinit var objectApi: ObjectApi
@@ -28,8 +25,8 @@ class RightechIntegrationService(
   fun setupIntegration() {
     logger.warn { "Using Rightech Address $url and token $token" }
     val fr = RightechFeignRepository(url, token)
-    val objectApi = fr.buildObjectsApi()
-    val modelApi = fr.buildModelsApi()
+    objectApi = fr.buildObjectsApi()
+    modelApi = fr.buildModelsApi()
 
     val models = modelApi.getModels()
     logger.warn { "Found ${models.size} models" }
@@ -45,6 +42,11 @@ class RightechIntegrationService(
         objects.single { (it.model == modelForSuit._id) && (it.name!!.doesNotCountain("бот")) }
     logger.warn { "Going to use $objectForSuit as Suit" }
     suitDeviceRightech.setup(objectForSuit)
+
+    val objectForHeli =
+        objects.single { (it.model == modelForHelicopter._id) && (it.name!!.doesNotCountain("бот")) }
+    logger.warn { "Going to use $objectForHeli as Helicopter" }
+    helicopterDeviceRightech.setup(objectForHeli)
   }
 
   private fun String.doesNotCountain(s: String): Boolean {
